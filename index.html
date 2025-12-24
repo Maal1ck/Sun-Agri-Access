@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sun Agri Access Sénégal - Géoportail d'optimisation pour l'irrigation solaire.">
+    <title>Sun Agri Access Sénégal | Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Variables for Theme Colors (Based on your Logo) --- */
+        :root {
+            --solar-orange: #FF9F1C;
+            --solar-yellow: #FFC107;
+            --water-blue: #00A8E8;
+            --deep-blue-bg: #02111B;
+            --text-white: #FFFFFF;
+            --tech-green: #4CAF50;
+        }
+
+        /* --- Reset & Global Styles --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--deep-blue-bg);
+            color: var(--text-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- Background Mesh Effect --- */
+        /* Creates a subtle tech grid pattern in the background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 168, 232, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 168, 232, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* --- Header / Navigation --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        .brand span { color: var(--solar-yellow); }
+
+        /* --- Hero Section (Main Content) --- */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            /* Radial gradient to make the center pop */
+            background: radial-gradient(circle at center, #0d2636 0%, var(--deep-blue-bg) 70%);
+        }
+
+        .hero-logo {
+            width: 250px; /* Adjust size depending on your actual logo file */
+            max-width: 80%;
+            margin-bottom: 30px;
+            /* A subtle glow effect behind the logo */
+            filter: drop-shadow(0 0 20px rgba(255, 193, 7, 0.3));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, var(--solar-yellow), var(--solar-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 40px;
+            color: #ccc;
+        }
+
+        /* --- The "See Map" Button --- */
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, var(--solar-orange), var(--solar-yellow));
+            color: var(--deep-blue-bg);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px -10px rgba(255, 159, 28, 0.5);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px rgba(255, 159, 28, 0.7);
+            background: transparent;
+            border: 2px solid var(--solar-yellow);
+            color: var(--solar-yellow);
+        }
+
+        /* --- Footer --- */
+        footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* --- Animations --- */
+        @keyframes float {
+            0% { transform: translatey(0px); }
+            50% { transform: translatey(-15px); }
+            100% { transform: translatey(0px); }
+        }
+
+        /* --- Mobile Responsive --- */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .hero-logo { width: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">SUN AGRI <span>ACCESS</span></div>
+    </header>
+
+    <main class="hero">
+        <img src="F:\POST GRADUATE CRASTE LF\SECOND YEAR\Advanced GIS\SolarGWE\WebdevSolarGWE\assests\S2AA_logo.JPG" alt="Sun Agri Access Sénégal Logo" class="hero-logo">
+        
+        <h1>L'Avenir de l'Irrigation Solaire</h1>
+        <p>Une plateforme cartographique intelligente pour identifier les zones agricoles les plus rentables au Sénégal.</p>
+        
+        <a href="map.html" class="cta-button">Voir la Carte Interactive</a>
+    </main>
+
+    <footer>
+        © 2025 Sun Agri Access Sénégal. Projet SIG Innovant.
+    </footer>
+
+</body>
+</html>
