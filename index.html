@@ -28,12 +28,11 @@
             background-color: var(--deep-blue-bg);
             color: var(--text-white);
             height: 100vh;
-            overflow: hidden; /* Prevents scrollbars for the fullscreen effect */
+            overflow: hidden; 
             position: relative;
         }
 
         /* --- 2. DYNAMIC BACKGROUND --- */
-        /* Moving Grid */
         .bg-grid {
             position: absolute;
             top: 0; left: 0; width: 200%; height: 200%;
@@ -46,7 +45,6 @@
             z-index: -2;
         }
 
-        /* Floating Particles (Stars/Dust) */
         .particles {
             position: absolute;
             width: 100%; height: 100%;
@@ -68,7 +66,7 @@
             100% { background-position: 550px 550px, 590px 610px, 680px 820px, 620px 650px; }
         }
 
-        /* --- 3. LAYOUT --- */
+        /* --- 3. LAYOUT & NAVIGATION --- */
         header {
             position: absolute;
             top: 0; left: 0; width: 100%;
@@ -84,8 +82,88 @@
             font-weight: 700;
             letter-spacing: 2px;
             text-shadow: 0 0 15px rgba(0, 168, 232, 0.3);
+            text-decoration: none;
+            color: var(--text-white);
         }
         .brand span { color: var(--solar-yellow); }
+
+        /* Navigation Menu Styles */
+        .navbar ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: var(--text-white);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 10px 0;
+            position: relative;
+        }
+
+        .navbar a:hover {
+            color: var(--solar-orange);
+            text-shadow: 0 0 10px rgba(255, 159, 28, 0.5);
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown .fa-chevron-down {
+            font-size: 0.7rem;
+            margin-left: 5px;
+            transition: transform 0.3s;
+        }
+
+        .dropdown:hover .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: rgba(2, 17, 27, 0.95); /* Deep dark blue */
+            backdrop-filter: blur(15px);
+            min-width: 200px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 10px 0;
+            z-index: 200;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .dropdown:hover .dropdown-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 12px 25px;
+            font-size: 0.85rem;
+            border-left: 2px solid transparent;
+            text-transform: none; /* Keep dropdown items standard casing or uppercase based on preference */
+        }
+
+        .dropdown-content a:hover {
+            background: linear-gradient(90deg, rgba(255, 159, 28, 0.1), transparent);
+            border-left: 2px solid var(--solar-orange);
+            padding-left: 30px; /* Slide effect */
+        }
 
         .container {
             height: 100%;
@@ -115,12 +193,11 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Typewriter Effect Container */
         .typewriter {
             display: inline-block;
-            overflow: hidden; /* Ensures the content is not revealed until the animation */
-            border-right: .15em solid var(--solar-orange); /* The typwriter cursor */
-            white-space: nowrap; /* Keeps the content on a single line */
+            overflow: hidden; 
+            border-right: .15em solid var(--solar-orange); 
+            white-space: nowrap; 
             margin: 0 auto 40px;
             font-family: 'Roboto Mono', monospace;
             font-size: 1.1rem;
@@ -166,7 +243,7 @@
             width: 100%;
         }
 
-        /* --- 5. HOVER CARDS (The Cool Feature) --- */
+        /* --- 5. HOVER CARDS --- */
         .features-grid {
             display: flex;
             gap: 20px;
@@ -212,13 +289,12 @@
         .feature-card p {
             font-size: 0.85rem;
             color: #ccc;
-            opacity: 0; /* Hidden by default */
+            opacity: 0; 
             max-height: 0;
             transition: all 0.5s ease;
             transform: translateY(20px);
         }
 
-        /* Reveal text on hover */
         .feature-card:hover p {
             opacity: 1;
             max-height: 100px;
@@ -243,6 +319,8 @@
 
         /* --- MOBILE --- */
         @media (max-width: 850px) {
+            header { padding: 20px; flex-direction: column; gap: 15px; }
+            .navbar ul { gap: 15px; flex-wrap: wrap; justify-content: center; }
             h1 { font-size: 2.2rem; }
             .typewriter { font-size: 0.8rem; white-space: normal; border: none; animation: none; width: 90%; }
             .features-grid { flex-direction: column; width: 90%; margin-top: 30px; overflow-y: auto; height: 35vh; }
@@ -251,6 +329,9 @@
             .feature-card p { opacity: 1; max-height: none; transform: none; margin-top: 0; font-size: 0.75rem;}
             .feature-card i { margin-bottom: 0; font-size: 1.5rem; }
             body { overflow-y: auto; }
+            /* Adjust dropdown for mobile */
+            .dropdown-content { position: static; visibility: visible; opacity: 1; background: transparent; border: none; box-shadow: none; display: none; transform: none; padding-left: 20px;}
+            .dropdown:hover .dropdown-content { display: block; }
         }
     </style>
 </head>
@@ -260,8 +341,29 @@
     <div class="particles"></div>
 
     <header>
-        <div class="brand">SUN AGRI <span>ACCESS</span></div>
-        <div style="font-family:'Roboto Mono'; font-size: 0.8rem; color: var(--water-blue);">v1.0 BETA</div>
+        <a href="#" class="brand">SUN AGRI <span>ACCESS</span></a>
+        
+        <nav class="navbar">
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li class="dropdown">
+                    <a href="#">Projets <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="map.html"><i class="fas fa-map-marked-alt"></i> Géoportail</a>
+                        <a href="data.html"><i class="fas fa-chart-line"></i> Données Solaires</a>
+                        <a href="water.html"><i class="fas fa-tint"></i> Hydrologie</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Ressources <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="docs.html">Documentation</a>
+                        <a href="api.html">API Access</a>
+                        <a href="contact.html">Contact</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
     </header>
 
     <div class="container">
