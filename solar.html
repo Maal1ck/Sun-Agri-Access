@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sun Agri Access | Potentiel Solaire</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- THEME SOLAIRE --- */
+        :root {
+            --solar-primary: #FFC107;      /* Jaune Vif */
+            --solar-secondary: #FF9F1C;    /* Orange */
+            --deep-bg: #02111B;
+            --glass-panel: rgba(2, 17, 27, 0.85);
+            --glass-border: rgba(255, 193, 7, 0.2);
+            --text-white: #FFFFFF;
+            --text-muted: #8892b0;
+        }
+
+        body { 
+            margin: 0; padding: 0; background-color: var(--deep-bg); color: var(--text-white); 
+            font-family: 'Montserrat', sans-serif; overflow-x: hidden;
+        }
+
+        /* Background Effects */
+        .bg-sun {
+            position: fixed; top: -10%; right: -10%; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255,193,7,0.15) 0%, transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* Header */
+        header { 
+            padding: 20px 40px; border-bottom: 1px solid var(--glass-border); 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(2, 17, 27, 0.8); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-title { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+        .back-btn { 
+            text-decoration: none; color: var(--solar-primary); border: 1px solid var(--solar-primary); 
+            padding: 8px 20px; border-radius: 20px; font-size: 0.9rem; transition: 0.3s;
+        }
+        .back-btn:hover { background: var(--solar-primary); color: #000; }
+
+        /* --- LAYOUT --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        /* Section Intro (Map + Chart) */
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 60px; }
+        .glass-card {
+            background: var(--glass-panel); border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 25px; backdrop-filter: blur(10px);
+        }
+        .card-header { 
+            display: flex; justify-content: space-between; margin-bottom: 15px; 
+            font-family: 'Roboto Mono'; color: var(--solar-secondary); font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
+        }
+
+        #map { width: 100%; height: 350px; border-radius: 10px; }
+
+        /* --- METHODOLOGIE (Formules) --- */
+        .methodology-section { margin-top: 50px; }
+        .section-title { 
+            font-size: 2rem; font-weight: 800; margin-bottom: 40px; text-align: center;
+            background: linear-gradient(to right, #fff, var(--solar-primary)); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .step-container {
+            display: flex; flex-direction: column; gap: 30px; position: relative;
+        }
+        /* Vertical Line connecting steps */
+        .step-container::before {
+            content: ''; position: absolute; left: 30px; top: 0; bottom: 0; width: 2px;
+            background: linear-gradient(to bottom, var(--solar-primary), transparent);
+            z-index: 0;
+        }
+
+        .step-card {
+            margin-left: 60px; background: rgba(255,255,255,0.03); 
+            border-left: 4px solid var(--solar-primary); padding: 20px 30px;
+            border-radius: 0 10px 10px 0; position: relative;
+        }
+        .step-badge {
+            position: absolute; left: -75px; top: 0; width: 30px; height: 30px;
+            background: var(--deep-bg); border: 2px solid var(--solar-primary);
+            border-radius: 50%; color: var(--solar-primary); font-weight: bold;
+            display: flex; justify-content: center; align-items: center; z-index: 1;
+        }
+        
+        .formula-box {
+            background: rgba(0,0,0,0.3); padding: 15px; margin: 15px 0;
+            border-radius: 8px; text-align: center; font-size: 1.1rem;
+            overflow-x: auto; /* Pour les petites écrans */
+        }
+        .variable-list { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+        .variable-list span { color: var(--solar-primary); font-family: 'Roboto Mono'; }
+
+        /* --- SIMULATEUR --- */
+        .simulator {
+            background: linear-gradient(135deg, rgba(255,193,7,0.1), rgba(0,0,0,0));
+            border: 1px solid var(--solar-primary); padding: 40px; border-radius: 20px;
+            margin-top: 60px; text-align: center;
+        }
+        .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: left; margin-top: 30px; }
+        
+        input[type=range] { width: 100%; margin: 10px 0; accent-color: var(--solar-primary); }
+        
+        .result-box {
+            background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; text-align: center;
+            border: 1px solid var(--solar-primary);
+        }
+        .price-tag { font-size: 3rem; font-weight: 900; color: var(--solar-primary); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .data-grid, .sim-grid { grid-template-columns: 1fr; }
+            .step-card { margin-left: 40px; padding: 15px; }
+            .step-container::before { left: 15px; }
+            .step-badge { left: -45px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-sun"></div>
+
+    <header>
+        <div class="nav-title">SOLAR <span style="color:var(--solar-primary)">DATA</span></div>
+        <a href="index.html" class="back-btn">Retour Accueil</a>
+    </header>
+
+    <div class="container">
+
+        <div class="data-grid">
+            <div class="glass-card">
+                <div class="card-header">
+                    <span>IRRADIATION SOLAIRE (GHI)</span>
+                    <i class="fas fa-sun"></i>
+                </div>
+                <div id="map"></div>
+                <p style="font-size:0.8rem; color:#aaa; margin-top:10px;">
+                    <i class="fas fa-info-circle"></i> Données: Global Solar Atlas 2.0 (World Bank Group)
+                </p>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header">
+                    <span>POTENTIEL MENSUEL MOYEN</span>
+                    <i class="fas fa-chart-area"></i>
+                </div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="solarChart"></canvas>
+                </div>
+                <div style="margin-top:20px; font-size:0.9rem; line-height:1.5;">
+                    <strong style="color:var(--solar-primary)">Le Saviez-vous ?</strong><br>
+                    Le Sénégal bénéficie d'une moyenne de <span style="color:white">5.8 kWh/m²/jour</span>. Même en saison des pluies (Juillet-Sept), le potentiel reste suffisant pour l'irrigation solaire directe.
+                </div>
+            </div>
+        </div>
+
+
+        <div class="methodology-section">
+            <h2 class="section-title">Algorithme de Calcul du Coût</h2>
+            
+            <div class="step-container">
+                
+                <div class="step-card">
+                    <div class="step-badge">1</div>
+                    <h3>Énergie Hydraulique Requise</h3>
+                    <p>Nous calculons d'abord l'énergie physique nécessaire pour lever l'eau de la nappe jusqu'à la surface.</p>
+                    
+                    <div class="formula-box">
+                        $$ E_{h} = \frac{\rho \cdot g \cdot Q \cdot H_{man}}{\eta_{p}} $$
+                    </div>
+                    
+                    <div class="variable-list">
+                        <span>Q</span> : Volume d'eau journalier (20 m³/jour)<br>
+                        <span>H_man</span> : Hauteur manométrique (Profondeur nappe + Pertes)<br>
+                        <span>η_p</span> : Rendement de la pompe (estimé à 0.6)
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-badge">2</div>
+                    <h3>Dimensionnement Photovoltaïque</h3>
+                    <p>Quelle puissance de panneaux (Wc) faut-il pour fournir cette énergie, en tenant compte du soleil local ?</p>
+                    
+                    <div class="formula-box">
+                        $$ P_{peak} = \frac{E_{h}}{GHI_{local} \cdot PR} \times FS $$
+                    </div>
+                    
+                    <div class="variable-list">
+                        <span>GHI</span> : Irradiation solaire locale (kWh/m²/jour)<br>
+                        <span>PR</span> : Performance Ratio (Pertes thermiques/câbles ~ 0.75)<br>
+                        <span>FS</span> : Facteur de Sécurité (1.3) pour les jours nuageux
+                    </div>
+                </div>
+
+                <div class="step-card" style="border-color:#4CAF50;">
+                    <div class="step-badge" style="border-color:#4CAF50; color:#4CAF50">3</div>
+                    <h3 style="color:#4CAF50">Calcul du LCOW (Coût par m³)</h3>
+                    <p>Enfin, nous divisons l'investissement total par le volume d'eau produit sur la durée de vie du système.</p>
+                    
+                    <div class="formula-box">
+                        $$ LCOW = \frac{P_{peak} \times \text{Prix}_{Wc}}{Q_{jour} \times 365 \times \text{Années}} $$
+                    </div>
+                    
+                    <div class="variable-list">
+                        <span>P_peak</span> : Puissance solaire calculée (Watts)<br>
+                        <span>Prix_Wc</span> : Coût moyen installé (300 FCFA / Watt)<br>
+                        <span>Années</span> : Durée de vie du projet (20 ans)
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="simulator">
+            <h2 style="margin:0;">Simulateur de Rentabilité</h2>
+            <p style="color:var(--text-muted)">Estimez le coût de l'eau en temps réel selon la profondeur.</p>
+
+            <div class="sim-grid">
+                <div>
+                    <label>Profondeur de la nappe (m)</label>
+                    <input type="range" id="depthInput" min="5" max="80" value="25">
+                    <div style="display:flex; justify-content:space-between; font-family:'Roboto Mono';">
+                        <span>5m</span>
+                        <span id="depthValue" style="color:var(--solar-primary)">25m</span>
+                        <span>80m</span>
+                    </div>
+
+                    <br>
+
+                    <label>Ensoleillement (kWh/m²/jour)</label>
+                    <input type="range" id="sunInput" min="4" max="7" step="0.1" value="5.8">
+                    <div style="display:flex; justify-content:space-between; font-family:'Roboto Mono';">
+                        <span>4.0</span>
+                        <span id="sunValue" style="color:var(--solar-primary)">5.8</span>
+                        <span>7.0</span>
+                    </div>
+                </div>
+
+                <div class="result-box">
+                    <div style="text-transform:uppercase; font-size:0.8rem; margin-bottom:10px;">Coût de revient estimé</div>
+                    <div class="price-tag"><span id="resultCost">--</span> <span style="font-size:1rem">FCFA/m³</span></div>
+                    <p style="font-size:0.8rem; color:#aaa; margin-top:10px;">
+                        *Basé sur une pompe immergée standard et une durée de vie de 20 ans.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 1. CARTE (Simple visualization)
+        const map = L.map('map', {zoomControl: false}).setView([14.5, -14.3], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        
+        // Ajout d'un cercle fictif pour montrer une zone "Solaire Intense"
+        L.circle([15.5, -15.0], {
+            color: '#FFC107', fillColor: '#FFC107', fillOpacity: 0.2, radius: 80000
+        }).addTo(map).bindPopup("Zone à fort potentiel (Nord)");
+
+
+        // 2. GRAPHIQUE (Chart.js)
+        new Chart(document.getElementById('solarChart'), {
+            type: 'bar',
+            data: {
+                labels: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'],
+                datasets: [{
+                    label: 'Irradiation (kWh/m²)',
+                    data: [5.2, 6.0, 6.8, 7.2, 7.0, 6.5, 5.8, 5.5, 5.7, 6.0, 5.5, 5.1],
+                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                    borderColor: '#FFC107',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+
+        // 3. LOGIQUE DU SIMULATEUR
+        const depthInput = document.getElementById('depthInput');
+        const sunInput = document.getElementById('sunInput');
+        const depthValDisplay = document.getElementById('depthValue');
+        const sunValDisplay = document.getElementById('sunValue');
+        const resultDisplay = document.getElementById('resultCost');
+
+        function calculateCost() {
+            // Récupération des valeurs
+            const H = parseFloat(depthInput.value) + 5; // +5m pour les pertes de charge
+            const GHI = parseFloat(sunInput.value);
+            const Q = 20; // 20 m3/jour (Fixe pour l'exemple)
+
+            // Constantes physiques
+            const g = 9.81;
+            const rho = 1000;
+            const eta = 0.5; // Rendement global pompe (prudent)
+            
+            // 1. Energie Hydraulique (Joules -> Wh)
+            // E = (rho * g * Q * H) / eta. (Q en m3/s pour la physique, mais ici on simplifie en Wh direct)
+            // Formule simplifiée Wh/jour = (2.725 * Q * H) / eta
+            const HydraulicEnergy_Wh = (2.725 * Q * H) / eta;
+
+            // 2. Puissance Crête (Wc)
+            const PR = 0.75;
+            const Power_Peak = HydraulicEnergy_Wh / (GHI * PR);
+
+            // 3. Coût (LCOW)
+            const Price_Per_Wc = 300; // FCFA
+            const Capex = Power_Peak * Price_Per_Wc;
+            const Total_Water = Q * 365 * 20; // Sur 20 ans
+
+            const LCOW = Capex / Total_Water;
+
+            // Mise à jour UI
+            depthValDisplay.innerText = depthInput.value + 'm';
+            sunValDisplay.innerText = GHI.toFixed(1);
+            
+            // Animation du chiffre (Juste visuel)
+            resultDisplay.innerText = LCOW.toFixed(2);
+        }
+
+        // Ecouteurs d'événements
+        depthInput.addEventListener('input', calculateCost);
+        sunInput.addEventListener('input', calculateCost);
+
+        // Calcul initial
+        calculateCost();
+
+    </script>
+</body>
+</html>
