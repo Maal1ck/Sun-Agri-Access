@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Analyse Profondeur Nappes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #02111B;
+            --card-bg: rgba(2, 17, 27, 0.8);
+            --text-main: #ffffff;
+            --accent-blue: #00A8E8;
+            --border: rgba(0, 168, 232, 0.3);
+        }
+
+        body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main); font-family: 'Montserrat', sans-serif; height: 100vh; display: flex; flex-direction: column; }
+
+        /* Header Minimaliste */
+        header { padding: 15px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); }
+        h1 { font-size: 1.2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 0; }
+        .subtitle { font-family: 'Roboto Mono'; font-size: 0.8rem; color: #8892b0; }
+
+        /* Layout */
+        .container { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
+        
+        /* Carte (Gauche) */
+        .map-container { flex: 2; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
+        #map { width: 100%; height: 100%; }
+
+        /* Légende flottante sur la carte */
+        .legend {
+            position: absolute; bottom: 30px; right: 30px; z-index: 1000;
+            background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid var(--border);
+            font-family: 'Roboto Mono'; font-size: 0.8rem;
+        }
+        .gradient-bar { width: 150px; height: 10px; background: linear-gradient(to right, #d1e5f0, #2166ac); margin-bottom: 5px; border-radius: 5px; }
+        .legend-labels { display: flex; justify-content: space-between; color: #ccc; font-size: 0.7rem; }
+
+        /* Graphique (Droite) */
+        .chart-container { 
+            flex: 1; 
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; 
+            display: flex; flex-direction: column;
+        }
+        
+        /* Popup Custom */
+        .leaflet-popup-content-wrapper { background: var(--bg-color); color: white; border: 1px solid var(--accent-blue); font-family: 'Roboto Mono'; }
+        .leaflet-popup-tip { background: var(--accent-blue); }
+
+        /* Responsive */
+        @media (max-width: 900px) { .container { flex-direction: column; overflow-y: auto; } .map-container { height: 400px; flex: none; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Moyenne Régionale</h1>
+            <span class="subtitle">> DATA: NIVEAU STATIQUE (m)</span>
+        </div>
+        <a href="index.html" style="color:var(--accent-blue); text-decoration:none; font-size:0.9rem; border:1px solid var(--accent-blue); padding:5px 15px; border-radius:20px;">Retour</a>
+    </header>
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="legend">
+                <div style="margin-bottom:5px;">Profondeur (m)</div>
+                <div class="gradient-bar"></div>
+                <div class="legend-labels">
+                    <span>Faible</span>
+                    <span>Profonde</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 style="font-size:1rem; color:var(--accent-blue); margin-bottom:20px;">CLASSEMENT PAR PROFONDEUR</h3>
+            <div style="flex:1; position: relative;">
+                <canvas id="depthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Initialisation Carte
+        const map = L.map('map').setView([14.5, -14.5], 7);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+        // 2. Fonction de Couleur (Echelle de Bleus)
+        // Plus c'est profond (>40m), plus c'est foncé
+        function getColor(d) {
+            return d > 50 ? '#08306b' :
+                   d > 40 ? '#2879b9' :
+                   d > 30 ? '#5eaac9' :
+                   d > 20 ? '#a7d0e4' :
+                            '#e0f3f8';
+        }
+
+        function style(feature) {
+            return {
+                fillColor: getColor(feature.properties.moyenne_profondeur),
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.8
+            };
+        }
+
+        // 3. Chargement des données
+        fetch('./regions_moyenne.geojson')
+            .then(resp => { if (!resp.ok) throw new Error(resp.status + ' ' + resp.statusText); return resp.json(); })
+            .then(data => {
+                
+                console.log('Loaded features:', data.features.length);
+                // A. Affichage Carte
+                const geoJsonLayer = L.geoJson(data, {
+                    style: style,
+                    onEachFeature: (feature, layer) => {
+                        // Popup simple et efficace
+                        layer.bindPopup(`
+                            <strong>${feature.properties.region_nom}</strong><br>
+                            Moyenne: <span style="color:#00A8E8; font-weight:bold;">${feature.properties.moyenne_profondeur} m</span>
+                        `);
+                        
+                        // Effet Hover
+                        layer.on('mouseover', function(e) {
+                            this.setStyle({ weight: 3, color: '#00A8E8', fillOpacity: 1 });
+                        });
+                        layer.on('mouseout', function(e) {
+                            geoJsonLayer.resetStyle(this);
+                        });
+                    }
+                }).addTo(map);
+                
+                map.fitBounds(geoJsonLayer.getBounds());
+
+                // B. Préparation Données Graphique
+                // On trie les données pour que le graphique soit joli (du plus profond au moins profond)
+                const sortedData = data.features.map(f => f.properties)
+                                     .sort((a, b) => b.moyenne_profondeur - a.moyenne_profondeur);
+
+                const labels = sortedData.map(d => d.region_nom);
+                const values = sortedData.map(d => d.moyenne_profondeur);
+                // On crée une couleur pour chaque barre identique à la carte
+                const colors = values.map(v => getColor(v));
+
+                // C. Création du Graphique
+                new Chart(document.getElementById('depthChart'), {
+                    type: 'bar', // Barres horizontales pour lire facilement les noms
+                    indexAxis: 'y', // Cela transforme le graphique en horizontal
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Profondeur Moyenne (m)',
+                            data: values,
+                            backgroundColor: colors,
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            borderWidth: 1,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { 
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#8892b0' }
+                            },
+                            y: { 
+                                grid: { display: false },
+                                ticks: { color: 'white', font: {family:'Montserrat'} }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(err => { console.error('GeoJSON load failed:', err); alert('GeoJSON load failed: '+err.message); });
+    </script>
+</body>
+</html>

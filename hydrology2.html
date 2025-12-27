@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sun Agri Access | Hydrologie</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- THEME IDENTIQUE AUX AUTRES PAGES --- */
+        :root {
+            --solar-orange: #FF9F1C;
+            --solar-yellow: #FFC107;
+            --water-blue: #00A8E8;
+            --deep-blue-bg: #02111B;
+            --glass-bg: rgba(2, 17, 27, 0.7);
+            --glass-border: rgba(0, 168, 232, 0.2);
+            --text-white: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--deep-blue-bg);
+            color: var(--text-white);
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- BACKGROUND --- */
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
+            background-image: linear-gradient(rgba(0, 168, 232, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 168, 232, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- NAV --- */
+        nav {
+            padding: 20px 50px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border); background: rgba(2, 17, 27, 0.9);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-brand { font-weight: 900; font-size: 1.2rem; color: white; text-decoration: none; }
+        .nav-brand span { color: var(--water-blue); }
+        .back-link { color: #ccc; text-decoration: none; font-size: 0.9rem; transition:0.3s;}
+        .back-link:hover { color: var(--water-blue); }
+
+        /* --- LAYOUT DU DASHBOARD --- */
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+        }
+
+        .header-section { margin-bottom: 50px; text-align: left; }
+        .header-section h1 {
+            font-size: 3rem; text-transform: uppercase; margin-bottom: 10px;
+            background: linear-gradient(to right, var(--water-blue), #ffffff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header-section p { color: #8892b0; max-width: 600px; }
+
+        /* --- GRID SYSTEM --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto auto; /* 2 rangées */
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        /* --- WIDGET CARDS (Le verre) --- */
+        .widget {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+        .widget:hover { transform: translateY(-5px); border-color: var(--water-blue); }
+
+        /* Widget Type: Big Number (KPI) */
+        .kpi-card { grid-column: span 1; display: flex; flex-direction: column; justify-content: center; }
+        .kpi-icon { font-size: 2rem; color: var(--water-blue); margin-bottom: 10px; opacity: 0.8; }
+        .kpi-value { font-size: 2.5rem; font-weight: 900; color: white; margin-bottom: 5px; }
+        .kpi-label { font-family: 'Roboto Mono'; font-size: 0.8rem; color: #8892b0; text-transform: uppercase; letter-spacing: 1px;}
+
+        /* Widget Type: Large Chart */
+        .chart-card-wide { grid-column: span 2; height: 350px; position: relative;}
+        .chart-card-tall { grid-column: span 2; grid-row: span 2; height: 100%; }
+
+        .widget h3 {
+            font-size: 1.1rem; margin-bottom: 20px; color: var(--water-blue); font-weight: 700;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* --- EXPLANATION SECTION --- */
+        .info-section {
+            display: flex; gap: 40px; align-items: center; margin-top: 80px;
+            padding: 40px; background: rgba(255,255,255,0.02); border-radius: 20px;
+        }
+        .info-text h2 { color: var(--water-blue); margin-bottom: 20px; }
+        .info-text p { margin-bottom: 15px; color: #ccc; line-height: 1.6; }
+        .info-img { width: 300px; border-radius: 10px; opacity: 0.8; border: 1px solid var(--water-blue); }
+
+        /* --- MOBILE --- */
+        @media (max-width: 900px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .kpi-card, .chart-card-wide, .chart-card-tall { grid-column: span 1; }
+            .info-section { flex-direction: column; }
+            .info-img { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+
+    <nav>
+        <a href="index.html" class="nav-brand">SUN AGRI <span>ACCESS</span></a>
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Retour</a>
+    </nav>
+
+    <div class="container">
+        
+        <div class="header-section">
+            <h1>Données Hydrogéologiques</h1>
+            <p>Analyse statistique des nappes phréatiques du Sénégal basée sur les relevés piézométriques de la DGPRE (Interpolation IDW).</p>
+        </div>
+
+        <div class="dashboard-grid">
+            
+            <div class="widget kpi-card">
+                <i class="fas fa-ruler-vertical kpi-icon"></i>
+                <div class="kpi-value">24.5 m</div>
+                <div class="kpi-label">Profondeur Moyenne</div>
+            </div>
+
+            <div class="widget kpi-card">
+                <i class="fas fa-bullseye kpi-icon"></i>
+                <div class="kpi-value">4000</div>
+                <div class="kpi-label">Ouvrages hydrauliques géolocalisés</div>
+            </div>
+
+            <div class="widget chart-card-wide">
+                <h3><i class="fas fa-chart-bar"></i> Distribution des Profondeurs</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+
+            <div class="widget chart-card-wide" style="grid-column: span 2;">
+                <h3><i class="fas fa-tint"></i> Potentiel d'Irrigation</h3>
+                <div style="height: 250px;">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+            </div>
+
+            <div class="widget kpi-card">
+                <i class="fas fa-coins kpi-icon"></i>
+                <div class="kpi-value">15 F</div>
+                <div class="kpi-label">Coût Min / m³</div>
+            </div>
+
+            <div class="widget kpi-card">
+                <i class="fas fa-map-marker-alt kpi-icon"></i>
+                <div class="kpi-value">35%</div>
+                <div class="kpi-label">Territoire Optimal</div>
+            </div>
+
+        </div>
+
+        <div class="info-section">
+            <div class="info-text">
+                <h2>Comprendre la Piézométrie</h2>
+                <p>
+                    La <strong>carte piézométrique</strong> représente l'altitude ou la profondeur de la surface de la nappe d'eau souterraine. C'est l'indicateur clé pour dimensionner une pompe solaire.
+                </p>
+                <p>
+                    <i class="fas fa-check" style="color:var(--water-blue)"></i> <strong>Zone Verte (< 20m) :</strong> Idéale pour le solaire. Investissement faible, rentabilité immédiate.
+                </p>
+                <p>
+                    <i class="fas fa-exclamation-triangle" style="color:var(--solar-orange)"></i> <strong>Zone Orange (20m - 60m) :</strong> Faisable mais nécessite plus de panneaux solaires.
+                </p>
+            </div>
+            
+            <img src="https://via.placeholder.com/400x300/02111b/00A8E8?text=Schema+Nappe+Phreatique" alt="Schéma Nappe" class="info-img">
+        </div>
+
+    </div>
+
+    <script>
+        // Configuration globale pour le look "Dark Mode"
+        Chart.defaults.color = '#8892b0';
+        Chart.defaults.font.family = "'Roboto Mono', sans-serif";
+
+        // --- WIDGET 1: BAR CHART (Distribution) ---
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['0-10m', '10-30m', '30-60m', '60m+'], // Les catégories de profondeur
+                datasets: [{
+                    label: 'Nombre de Forages',
+                    data: [320, 450, 200, 150], // MODIFIEZ CES CHIFFRES ICI
+                    backgroundColor: [
+                        '#4CAF50', // Vert (Super)
+                        '#00A8E8', // Bleu (Bon)
+                        '#FF9F1C', // Orange (Moyen)
+                        '#F44336'  // Rouge (Profond)
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // --- WIDGET 2: DOUGHNUT CHART (Potentiel) ---
+        const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+        new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Haut Potentiel (Rentable)', 'Potentiel Moyen', 'Faible Potentiel'],
+                datasets: [{
+                    data: [45, 35, 20], // MODIFIEZ CES POURCENTAGES ICI
+                    backgroundColor: ['#00A8E8', '#FF9F1C', '#2c3e50'],
+                    borderColor: '#02111B',
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
